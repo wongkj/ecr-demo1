@@ -1,0 +1,43 @@
+name: Build and push image to ECR
+
+on:
+  push:
+    branches:
+      - main
+      - "releases/**"
+
+jobs:
+  build:
+    name: Build Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - id: docker-tag
+        uses: yuya-takeyama/docker-tag-from-github-ref-action@v1
+
+      - name: Build & Push Docker image
+        id: docker-build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: wongkj/ecr-demo1
+          # Use the git tag as the image tag.
+          # github.ref format is like `refs/tags/v0.0.1`, so we strip the the
+          # `refs/tags/` prefix and export this for later use.
+          IMAGE_TAG: ${{ steps.docker-tag.outputs.tag }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
