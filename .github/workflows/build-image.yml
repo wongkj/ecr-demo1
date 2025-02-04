@@ -39,5 +39,6 @@ jobs:
           # `refs/tags/` prefix and export this for later use.
           IMAGE_TAG: ${{ steps.docker-tag.outputs.tag }}
         run: |
+          run: echo "registory: ${{ steps.login-ecr.outputs.registry }}"
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
